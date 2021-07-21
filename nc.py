@@ -9,20 +9,21 @@ Intended examples:
 """
 
 import argparse
+import re
 import socket
 import sys
 import threading
 
 def fatal_error(err: str):
     sys.stderr.write("[!] " + err + "\n");
-    sys.exit(-1)
+    sys.exit(1)
 
 def loop_sending_input_data(s: socket.socket):
     print("[*] Send data by typing and pressing enter")
 
     try:
         while True:
-            data = input().encode("utf-8")
+            data = input().encode("utf-8") + b"\n"
             print(f"[>] Sending: {data}")
             s.send(data)
     except KeyboardInterrupt:
@@ -47,10 +48,6 @@ def listen(addr: str, port: int):
 
         print(f"[*] Connection from {remote_addr_pair[0]}")
 
-        client_socket.close()
-
-
-        """
         thread = threading.Thread(target=loop_sending_input_data, args=(client_socket,), daemon=True)
         thread.start()
 
@@ -64,7 +61,6 @@ def listen(addr: str, port: int):
 
             if not thread.is_alive():
                 break
-        """
 
     except OSError as err:
         if err.errno == 99:
@@ -80,7 +76,6 @@ def listen(addr: str, port: int):
 
 
     s.close()
-
     print("[*] Connection closed")
 
 def connect(addr: str, port: int):
@@ -132,7 +127,8 @@ def main():
 
     args = parser.parse_args()
 
-    #TODO: VALIDATE WITH REGEX ON ADDRESS
+    if not re.match(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$", args.address):
+        fatal_error(f"Address {args.address} is not formatted correctly")
 
     if args.listen:
         listen(args.address, args.port)
