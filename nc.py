@@ -18,7 +18,7 @@ def fatal_error(err: str):
     sys.exit(-1)
 
 def loop_sending_input_data(s: socket.socket):
-    print("[*] Send data by typing and pressing enter.")
+    print("[*] Send data by typing and pressing enter")
 
     try:
         while True:
@@ -34,7 +34,54 @@ def listen(addr: str, port: int):
     Sets up a server to listen on (addr, port), and then loops over sending/receiving data.
     """
 
-    raise NotImplementedError
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    client_socket = None
+
+    try:
+        s.bind((addr, port))
+
+        s.listen(0)
+
+        (client_socket, remote_addr_pair) = s.accept()
+
+        print(f"[*] Connection from {remote_addr_pair[0]}")
+
+        client_socket.close()
+
+
+        """
+        thread = threading.Thread(target=loop_sending_input_data, args=(client_socket,), daemon=True)
+        thread.start()
+
+        while True:
+            data = client_socket.recv(1024)
+
+            if data == b'':
+                break
+
+            print(f"[<] Received: {data}")
+
+            if not thread.is_alive():
+                break
+        """
+
+    except OSError as err:
+        if err.errno == 99:
+            fatal_error(f"Cannot assign requested address {addr}")
+        elif err.errno == 98:
+            fatal_error(f"Port {port} is already in use")
+        else:
+            fatal_error(f"OSError: {err}")
+    except OverflowError:
+        fatal_error(f"Port {port} is not between 0-65535")
+    except KeyboardInterrupt:
+        pass
+
+
+    s.close()
+
+    print("[*] Connection closed")
 
 def connect(addr: str, port: int):
     """
@@ -63,17 +110,17 @@ def connect(addr: str, port: int):
                 break
 
     except ConnectionRefusedError:
-        fatal_error(f"Connection to {addr}:{port} refused.")
+        fatal_error(f"Connection to {addr}:{port} refused")
     except ConnectionAbortedError:
-        fatal_error(f"Connection to {addr}:{port} aborted.")
+        fatal_error(f"Connection to {addr}:{port} aborted")
     except ConnectionResetError:
-        fatal_error(f"Connection to {addr}:{port} reset.")
+        fatal_error(f"Connection to {addr}:{port} reset")
     except KeyboardInterrupt:
         pass
 
     
     s.close()
-    print(f"[*] Connection to {addr}:{port} closed.")
+    print(f"[*] Connection to {addr}:{port} closed")
 
 def main():
     parser = argparse.ArgumentParser()
