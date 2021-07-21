@@ -37,7 +37,7 @@ def listen(addr: str, port: int):
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    client_socket = None
+    client_socket = socket.socket()
 
     try:
         s.bind((addr, port))
@@ -45,6 +45,7 @@ def listen(addr: str, port: int):
         s.listen(0)
 
         (client_socket, remote_addr_pair) = s.accept()
+        s.close()
 
         print(f"[*] Connection from {remote_addr_pair[0]}")
 
@@ -75,7 +76,7 @@ def listen(addr: str, port: int):
         pass
 
 
-    s.close()
+    client_socket.close()
     print("[*] Connection closed")
 
 def connect(addr: str, port: int):
