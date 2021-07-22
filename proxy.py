@@ -70,9 +70,38 @@ def loop_outbound_comms(inbound_socket: socket.socket, outbound_socket: socket.s
         data = inbound_socket.recv(1024)
 
         if verbose:
-            print(f"[=>] {data}")
+            print(f"[=>] Origin -> Remote")
+            pretty_print_packet(data)
 
         outbound_socket.send(data)
+
+def int_to_ascii(b: int):
+    if b >= 0x21 and b <= 0x7e:
+        return chr(b)
+    return '.'
+
+def pretty_print_packet(data: bytes):
+    """
+    Print bytes data as a hexadecimal breakdown
+    e.g.:
+    0000    00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e    ................
+    0010    10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e    ................
+    .
+    .
+    .
+
+    """
+
+    arr_data = [data[i:i + 16] for i in range(0, len(data), 16)]
+    rows = []
+
+    for row_idx in range(len(arr_data)):
+        leading_counter = f"{row_idx*10:04d}"
+        hex_str = ' '.join([f"{format(b, 'x'):0>2}" for b in arr_data[row_idx]])
+        ascii_str = ''.join([int_to_ascii(b) for b in arr_data[row_idx]])
+        rows.append(f"{leading_counter}:    {hex_str: <47}    {ascii_str}")
+
+    print('\n'.join(rows))
 
 
 def main():
@@ -95,6 +124,8 @@ def main():
     inbound_socket = socket.socket()
     outbound_socket = socket.socket()
 
+    # GET / HTTP/1.1
+
     try:
         inbound_socket = listen_for_connection(args.listen_address, args.listen_port)
         outbound_socket = open_outbound_socket(args.connect_address, args.connect_port)
@@ -111,7 +142,8 @@ def main():
                 break
 
             if args.verbose:
-                print(f"[<=] {data}")
+                print(f"[<=] Remote -> Origin")
+                pretty_print_packet(data)
 
             inbound_socket.send(data)
 
